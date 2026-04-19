@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - Data Absensi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            margin: 0;
+            padding: 20px; 
+            color: #fff;
+            background: #0f0c29;  /* fallback */
+            background: linear-gradient(to right, #24243e, #302b63, #0f0c29);
+            min-height: 100vh;
+        }
+        
+        .container { 
+            max-width: 1000px; 
+            margin: 20px auto; 
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeIn 1s ease-out;
+        }
+
+        h1 { 
+            font-size: 2.5rem;
+            margin: 0;
+            background: -webkit-linear-gradient(#fff, #a6c0fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: #b3b3b3;
+            margin-top: 5px;
+            font-weight: 300;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+        }
+
+        th { 
+            background: rgba(0, 0, 0, 0.2); 
+            color: #a6c0fe; 
+            font-weight: 600;
+            padding: 20px;
+            text-align: left;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        td { 
+            padding: 20px; 
+            text-align: left; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05); 
+            vertical-align: middle;
+            color: #e0e0e0;
+        }
+
+        tr {
+            transition: all 0.3s ease;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .photo-cell img { 
+            width: 80px; 
+            height: 80px;
+            border-radius: 50%; /* Bulat */
+            object-fit: cover;
+            border: 2px solid rgba(166, 192, 254, 0.5);
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .photo-cell img:hover {
+            transform: scale(1.5);
+            border-color: #00f260;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            z-index: 10;
+            position: relative;
+        }
+
+        .student-name {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .empty { 
+            text-align: center; 
+            color: #a6c0fe; 
+            font-weight: 300; 
+            padding: 50px 0;
+            font-size: 1.2rem;
+        }
+
+        .badge {
+            background: rgba(0, 242, 96, 0.15);
+            color: #00f260;
+            border: 1px solid rgba(0, 242, 96, 0.3);
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            display: inline-block;
+        }
+
+        .time-badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #cfd8dc;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-clear {
+            background: rgba(255, 75, 43, 0.15);
+            color: #ff4b2b;
+            border: 1px solid rgba(255, 75, 43, 0.3);
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .btn-clear:hover {
+            background: #ff4b2b;
+            color: #fff;
+            box-shadow: 0 5px 15px rgba(255, 75, 43, 0.4);
+            transform: translateY(-2px);
+            border-color: #ff4b2b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Dashboard Kehadiran</h1>
+            <div class="subtitle">Rekap Data Absensi Berbasis AI • Auto-Refresh Aktif 🟢</div>
+            <button class="btn-clear" onclick="clearData()">🗑️ Bersihkan Semua Data</button>
+        </div>
+
+        <div class="glass-panel">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Profil</th>
+                        <th>Identitas Siswa</th>
+                        <th>Waktu Hadir</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- Data dimuat dengan JS -->
+                </tbody>
+            </table>
+            <div id="empty-state" class="empty" style="display: none;">
+                Belum ada data absensi yang masuk hari ini.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadData() {
+            try {
+                const res = await fetch('/api/absensi');
+                const data = await res.json();
+                
+                const tbody = document.getElementById('table-body');
+                const emptyState = document.getElementById('empty-state');
+                
+                if (!data || data.length === 0) {
+                    emptyState.style.display = 'block';
+                    return;
+                } else {
+                    emptyState.style.display = 'none';
+                }
+                
+                data.sort((a, b) => b.id - a.id);
+
+                let html = '';
+                data.forEach(item => {
+                    html += `
+                        <tr>
+                            <td class="photo-cell">
+                                <img src="${item.gambar}" alt="Foto ${item.nama}">
+                            </td>
+                            <td>
+                                <div class="student-name">${item.nama}</div>
+                            </td>
+                            <td>
+                                <span class="time-badge">🕒 ${item.waktu}</span>
+                            </td>
+                            <td>
+                                <span class="badge">Hadir</span>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                tbody.innerHTML = html;
+            } catch (error) {
+                console.error('Gagal memuat data:', error);
+            }
+        }
+
+        // Panggil saat halaman pertama dibuka
+        loadData();
+        
+        // Fitur Auto-Refresh: ambil data baru dari server setiap 5 detik tanpa me-reload halaman
+        setInterval(loadData, 5000);
+
+        // Fungsi untuk membersihkan seluruh data
+        async function clearData() {
+            if (confirm('⚠️ PERINGATAN!\n\nApakah Anda yakin ingin menghapus SELURUH data absensi secara permanen? Data yang sudah dihapus tidak dapat dikembalikan.')) {
+                try {
+                    const res = await fetch('/api/absensi', { method: 'DELETE' });
+                    const result = await res.json();
+                    
+                    if (res.ok) {
+                        alert('✅ Data berhasil dibersihkan!');
+                        loadData(); // Refresh tabel seketika
+                    } else {
+                        throw new Error(result.error);
+                    }
+                } catch (error) {
+                    console.error('Gagal membersihkan data:', error);
+                    alert('❌ Gagal membersihkan data.');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

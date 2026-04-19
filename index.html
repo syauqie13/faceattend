@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absensi Face Recognition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(45deg, #120e2b, #331550, #170d36);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 720px;
+            width: 90%;
+            z-index: 10;
+            animation: fadeIn 1s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 2.2rem;
+            font-weight: 600;
+            background: -webkit-linear-gradient(#fff, #b3a1ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+        }
+
+        .video-wrapper {
+            position: relative;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 600px;
+            aspect-ratio: 4/3;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #000;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            transform: scaleX(-1);
+        }
+
+        #status {
+            margin-top: 30px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            padding: 15px 25px;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.4s ease;
+            display: inline-block;
+        }
+
+        .loading { 
+            color: #a6c0fe; 
+            border-color: rgba(166, 192, 254, 0.5) !important;
+            box-shadow: 0 0 15px rgba(166, 192, 254, 0.2);
+        }
+        .success { 
+            color: #00f260; 
+            background: rgba(0, 242, 96, 0.1) !important;
+            border-color: rgba(0, 242, 96, 0.5) !important;
+            box-shadow: 0 0 20px rgba(0, 242, 96, 0.2);
+        }
+        .error { 
+            color: #ff4b2b; 
+            background: rgba(255, 75, 43, 0.1) !important;
+            border-color: rgba(255, 75, 43, 0.5) !important;
+            box-shadow: 0 0 20px rgba(255, 75, 43, 0.2);
+        }
+        .countdown { 
+            color: #f6d365; 
+            background: rgba(246, 211, 101, 0.1) !important;
+            border-color: rgba(246, 211, 101, 0.5) !important;
+            box-shadow: 0 0 15px rgba(246, 211, 101, 0.2);
+            transform: scale(1.05);
+        }
+
+        /* Ambient floating orbs in background */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 1;
+            animation: float 10s infinite ease-in-out alternate;
+        }
+        .orb-1 {
+            width: 300px; height: 300px;
+            background: rgba(103, 58, 183, 0.5);
+            top: -50px; left: -50px;
+        }
+        .orb-2 {
+            width: 400px; height: 400px;
+            background: rgba(33, 150, 243, 0.4);
+            bottom: -100px; right: -50px;
+            animation-delay: -5s;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0) scale(1); }
+            100% { transform: translateY(30px) scale(1.1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <div class="glass-card">
+        <h1>Sistem Absensi AI</h1>
+        <div class="video-wrapper">
+            <video id="video" autoplay muted playsinline></video>
+        </div>
+        <div id="status" class="loading">Memuat model kecerdasan buatan...</div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+
+    <script>
+        const video = document.getElementById('video');
+        const statusEl = document.getElementById('status');
+        const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+        let detectionStartTime = 0;
+        let isSuccess = false;
+
+        async function initApp() {
+            try {
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                setStatus("Mengaktifkan kamera...", "loading");
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                video.srcObject = stream;
+            } catch (err) {
+                console.error("Error init:", err);
+                setStatus("Akses kamera ditolak atau perangkat tidak didukung.", "error");
+            }
+        }
+
+        function setStatus(text, className) {
+            statusEl.innerText = text;
+            statusEl.className = className;
+        }
+
+        video.addEventListener('play', () => {
+            const canvas = faceapi.createCanvasFromMedia(video);
+            document.querySelector('.video-wrapper').append(canvas);
+            
+            const displaySize = { width: video.clientWidth, height: video.clientHeight };
+            faceapi.matchDimensions(canvas, displaySize);
+
+            setInterval(async () => {
+                if (isSuccess) return;
+
+                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions());
+                const resizedDetections = faceapi.resizeResults(detections, displaySize);
+                
+                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+                faceapi.draw.drawDetections(canvas, resizedDetections);
+
+                if (detections.length > 0) {
+                    if (detectionStartTime === 0) detectionStartTime = Date.now();
+                    
+                    const elapsed = Date.now() - detectionStartTime;
+                    const remainingSeconds = Math.ceil((3000 - elapsed) / 1000);
+                    
+                    if (elapsed < 3000) {
+                        setStatus(`Wajah terdeteksi! Tahan posisi... (${remainingSeconds})`, "countdown");
+                    } else {
+                        isSuccess = true;
+                        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+                        setStatus("Berhasil! Memproses absensi...", "success");
+                        takeScreenshotAndSend();
+                    }
+                } else {
+                    detectionStartTime = 0;
+                    setStatus("Mendeteksi wajah... Arahkan wajah ke kamera.", "");
+                }
+            }, 150);
+        });
+
+        function takeScreenshotAndSend() {
+            const captureCanvas = document.createElement('canvas');
+            captureCanvas.width = video.videoWidth;
+            captureCanvas.height = video.videoHeight;
+            const ctx = captureCanvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
+            const base64Image = captureCanvas.toDataURL('image/jpeg', 0.85);
+            
+            setStatus("Mengirim data ke server...", "loading");
+
+            fetch('/absensi', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: base64Image })
+            })
+            .then(async (res) => {
+                setStatus("Absensi berhasil tercatat!", "success");
+                setTimeout(() => {
+                    isSuccess = false;
+                    detectionStartTime = 0;
+                    setStatus("Mendeteksi wajah... Arahkan wajah ke kamera.", "");
+                }, 4000);
+            })
+            .catch(err => {
+                setStatus("Gagal mengirim data. Coba lagi.", "error");
+                setTimeout(() => {
+                    isSuccess = false;
+                    detectionStartTime = 0;
+                }, 3000);
+            });
+        }
+
+        initApp();
+    </script>
+</body>
+</html>
